@@ -33,28 +33,30 @@ export async function GET() {
   
   // Отправляем начальное сообщение
   const initialMessage = {
-    type: "init",
+    jsonrpc: "2.0",
     id: customUUID,
-    capabilities: {
-      tools: {}
-    },
-    meta: {
-      name: "Vercel Integration",
-      version: "1.0.0",
-      description: "MCP сервер для интеграции с Vercel API"
+    method: "init",
+    params: {
+      capabilities: {
+        tools: {}
+      },
+      meta: {
+        name: "Vercel Integration",
+        version: "1.0.0",
+        description: "MCP сервер для интеграции с Vercel API"
+      }
     }
   };
   
   // Отправляем init сообщение
-  writeToStream(initialMessage);
+  await writeToStream(initialMessage);
   
   // Отправляем список инструментов
   setTimeout(async () => {
     await writeToStream({
-      type: "response",
+      jsonrpc: "2.0",
       id: Math.random().toString(36).substring(2, 15),
-      request_id: customUUID,
-      response: {
+      result: {
         tools: tools
       }
     });
@@ -75,35 +77,88 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Обработка вызова инструмента vercel-test
-    if (body.type === 'request' && body.params && body.params.name === 'vercel-test') {
-      const args = body.params.arguments || {};
-      
+    // Проверяем, что это JSON-RPC запрос
+    if (body.jsonrpc !== "2.0" || !body.method || !body.id) {
       return NextResponse.json({
-        type: 'response',
-        id: Math.random().toString(36).substring(2, 15),
-        request_id: body.id,
-        response: {
-          content: [{ type: "text", text: `Тестовый ответ: ${args.message || 'не указано сообщение'}` }]
+        jsonrpc: "2.0",
+        id: body.id || null,
+        error: {
+          code: -32600,
+          message: "Invalid Request"
+        }
+      }, { status: 400 });
+    }
+    
+    // Обработка вызова инструмента
+    if (body.method === "callTool") {
+      const params = body.params || {};
+      
+      // Проверяем наличие имени инструмента
+      if (!params.name) {
+        return NextResponse.json({
+          jsonrpc: "2.0",
+          id: body.id,
+          error: {
+            code: -32602,
+            message: "Invalid params: tool name is required"
+          }
+        }, { status: 400 });
+      }
+      
+      // Вызов инструмента vercel-test
+      if (params.name === 'vercel-test') {
+        const args = params.arguments || {};
+        
+        return NextResponse.json({
+          jsonrpc: "2.0",
+          id: body.id,
+          result: {
+            content: [{ type: "text", text: `Тестовый ответ: ${args.message || 'не указано сообщение'}` }]
+          }
+        });
+      }
+      
+      // Инструмент не найден
+      return NextResponse.json({
+        jsonrpc: "2.0",
+        id: body.id,
+        error: {
+          code: -32601,
+          message: `Method not found: ${params.name}`
+        }
+      }, { status: 404 });
+    }
+    
+    // Обработка запроса на получение списка инструментов
+    if (body.method === "listTools") {
+      return NextResponse.json({
+        jsonrpc: "2.0",
+        id: body.id,
+        result: {
+          tools: tools
         }
       });
     }
     
-    // Если инструмент не найден
+    // Метод не найден
     return NextResponse.json({
-      type: 'response',
-      id: Math.random().toString(36).substring(2, 15),
-      request_id: body.id || 'unknown',
-      response: {
-        content: [{ type: "text", text: "Инструмент не найден или не поддерживается" }],
-        isError: true
+      jsonrpc: "2.0",
+      id: body.id,
+      error: {
+        code: -32601,
+        message: `Method not found: ${body.method}`
       }
-    });
+    }, { status: 404 });
+    
   } catch (error) {
     console.error('Ошибка обработки запроса:', error);
     return NextResponse.json({
-      type: 'error',
-      message: `Error processing request: ${error instanceof Error ? error.message : String(error)}`
+      jsonrpc: "2.0",
+      id: null,
+      error: {
+        code: -32603,
+        message: `Internal error: ${error instanceof Error ? error.message : String(error)}`
+      }
     }, { status: 500 });
   }
 }
