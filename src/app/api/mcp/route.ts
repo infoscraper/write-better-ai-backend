@@ -32,7 +32,7 @@ const tools = [
 ];
 
 // Обработчик SSE запросов
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const encoder = new TextEncoder();
   const customUUID = Math.random().toString(36).substring(2, 15);
   
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     }
   };
   
-  const writeToStream = async (data: any) => {
+  const writeToStream = async (data: unknown) => {
     await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
   };
   
