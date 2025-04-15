@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Write Better AI - Test Page</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: #4a85f6;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    textarea {
+      min-height: 100px;
+    }
+    .editable {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 10px;
+      min-height: 100px;
+    }
+    .sample-text {
+      margin-top: 20px;
+      color: #666;
+    }
+    .test-section {
+      margin-bottom: 40px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    button {
+      background-color: #4a85f6;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3b76e3;
+    }
+    #api-test-result {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #eee;
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Write Better AI - Test Page</h1>
+  
+  <div class="test-section">
+    <h2>Extension Test</h2>
+    <p>Install the extension and test it on these input fields:</p>
+    
+    <div class="form-group">
+      <label for="input-text">Input Field (text):</label>
+      <input type="text" id="input-text" placeholder="Type some text with errors..." value="This sentense has spelling mistakes and punctuation errors , dont you agree">
+    </div>
+    
+    <div class="form-group">
+      <label for="textarea">Textarea:</label>
+      <textarea id="textarea" placeholder="Type longer text with errors...">I recieved your email yestarday but didnt have time to respnd. We can meet tomorow if thats ok with you.</textarea>
+    </div>
+    
+    <div class="form-group">
+      <label for="contenteditable">Contenteditable Div:</label>
+      <div id="contenteditable" class="editable" contenteditable="true">Teh quick brown fox jumps over teh lazy dog. its a beautifull day outside. wiht great weather</div>
+    </div>
+  </div>
+  
+  <div class="test-section">
+    <h2>Direct API Test</h2>
+    <p>Test the API endpoint directly:</p>
+    
+    <div class="form-group">
+      <label for="api-test-text">Text to improve:</label>
+      <textarea id="api-test-text">This is a test sentense. It has sum errors and could use improvment. Also, theres no proper capitalization in some places.</textarea>
+    </div>
+    
+    <div class="form-group">
+      <label>Style:</label>
+      <select id="api-test-style">
+        <option value="general">General</option>
+        <option value="business">Business</option>
+        <option value="casual">Casual</option>
+      </select>
+    </div>
+    
+    <button id="api-test-button">Test API</button>
+    
+    <div id="api-test-result"></div>
+  </div>
+  
+  <div class="sample-text">
+    <h2>Sample Text with Errors</h2>
+    <p>Copy and paste these texts to test the extension:</p>
+    <ul>
+      <li>Teh company recieved alot of feedback from there customers. they will implement changes.</li>
+      <li>I didnt want to beleive it , but it was true.she was right all along.</li>
+      <li>can you please forward me the documets when your done reviewing them.</li>
+    </ul>
+  </div>
+
+  <script>
+    // Simple script to test the API endpoint
+    document.getElementById('api-test-button').addEventListener('click', async () => {
+      const text = document.getElementById('api-test-text').value;
+      const style = document.getElementById('api-test-style').value;
+      const resultElement = document.getElementById('api-test-result');
+      
+      resultElement.textContent = 'Sending request...';
+      
+      try {
+        const response = await fetch('/api/improve-text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text, style })
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+          resultElement.textContent = `Error: ${data.error}`;
+        } else {
+          resultElement.innerHTML = `<strong>Original:</strong><br>${text}<br><br><strong>Improved:</strong><br>${data.improvedText}`;
+        }
+      } catch (error) {
+        resultElement.textContent = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html> 
