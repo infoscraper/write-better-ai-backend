@@ -64,20 +64,27 @@
       border: 1px solid #eee;
       background-color: #f9f9f9;
     }
-    /* Новые стили для симуляции расширения */
-    .fix-button {
+    /* Стили для иконки Fix with AI */
+    .fix-icon {
       position: absolute;
       right: 10px;
       top: 30px;
       background-color: #4a85f6;
       color: white;
       border: none;
-      padding: 5px 10px;
-      border-radius: 4px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 16px;
       z-index: 1000;
       display: none;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .fix-icon:hover {
+      background-color: #3b76e3;
     }
     .loader-overlay {
       position: absolute;
@@ -197,21 +204,21 @@
     <div class="form-group">
       <label for="input-text">Input Field (text):</label>
       <input type="text" id="input-text" placeholder="Type some text with errors..." value="This sentense has spelling mistakes and punctuation errors , dont you agree">
-      <button class="fix-button" data-for="input-text">Fix with AI</button>
+      <div class="fix-icon" data-for="input-text">✓</div>
       <div class="loader-overlay" id="loader-input-text"><div class="loader"></div></div>
     </div>
     
     <div class="form-group">
       <label for="textarea">Textarea:</label>
       <textarea id="textarea" placeholder="Type longer text with errors...">I recieved your email yestarday but didnt have time to respnd. We can meet tomorow if thats ok with you.</textarea>
-      <button class="fix-button" data-for="textarea">Fix with AI</button>
+      <div class="fix-icon" data-for="textarea">✓</div>
       <div class="loader-overlay" id="loader-textarea"><div class="loader"></div></div>
     </div>
     
     <div class="form-group">
       <label for="contenteditable">Contenteditable Div:</label>
       <div id="contenteditable" class="editable" contenteditable="true">Teh quick brown fox jumps over teh lazy dog. its a beautifull day outside. wiht great weather</div>
-      <button class="fix-button" data-for="contenteditable">Fix with AI</button>
+      <div class="fix-icon" data-for="contenteditable">✓</div>
       <div class="loader-overlay" id="loader-contenteditable"><div class="loader"></div></div>
     </div>
   </div>
@@ -223,15 +230,6 @@
     <div class="form-group">
       <label for="api-test-text">Text to improve:</label>
       <textarea id="api-test-text">This is a test sentense. It has sum errors and could use improvment. Also, theres no proper capitalization in some places.</textarea>
-    </div>
-    
-    <div class="form-group">
-      <label>Style:</label>
-      <select id="api-test-style">
-        <option value="general">General</option>
-        <option value="business">Business</option>
-        <option value="casual">Casual</option>
-      </select>
     </div>
     
     <button id="api-test-button">Test API</button>
@@ -253,7 +251,6 @@
     // Simple script to test the API endpoint
     document.getElementById('api-test-button').addEventListener('click', async () => {
       const text = document.getElementById('api-test-text').value;
-      const style = document.getElementById('api-test-style').value;
       const resultElement = document.getElementById('api-test-result');
       
       resultElement.textContent = 'Sending request...';
@@ -264,7 +261,7 @@
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ text, style })
+          body: JSON.stringify({ text })
         });
         
         const data = await response.json();
@@ -282,37 +279,58 @@
     // Симуляция функциональности расширения
     document.addEventListener('DOMContentLoaded', () => {
       const textFields = document.querySelectorAll('input[type="text"], textarea, [contenteditable="true"]');
-      const fixButtons = document.querySelectorAll('.fix-button');
+      const fixIcons = document.querySelectorAll('.fix-icon');
       
-      // Обработка фокуса на текстовых полях
+      let activeField = null;
+      
+      // Функция для скрытия всех иконок исправления
+      function hideAllIcons() {
+        fixIcons.forEach(icon => {
+          icon.style.display = 'none';
+        });
+      }
+      
+      // Функция для показа иконки только для активного поля
+      function showIconForActiveField() {
+        if (activeField && document.getElementById('show-on-focus').checked && document.getElementById('auto-detect').checked) {
+          const icon = document.querySelector(`.fix-icon[data-for="${activeField.id}"]`);
+          if (icon) {
+            icon.style.display = 'flex';
+          }
+        }
+      }
+      
+      // Обработка фокуса и клика на текстовых полях
       textFields.forEach(field => {
         field.addEventListener('focus', () => {
-          if (document.getElementById('show-on-focus').checked && document.getElementById('auto-detect').checked) {
-            // Находим соответствующую кнопку
-            const button = document.querySelector(`.fix-button[data-for="${field.id}"]`);
-            if (button) {
-              button.style.display = 'block';
-            }
-          }
+          activeField = field;
+          hideAllIcons();
+          showIconForActiveField();
+        });
+        
+        field.addEventListener('click', () => {
+          activeField = field;
+          hideAllIcons();
+          showIconForActiveField();
         });
         
         field.addEventListener('blur', (e) => {
-          // Не скрываем кнопку если клик был по ней самой
-          if (!e.relatedTarget || !e.relatedTarget.classList.contains('fix-button')) {
+          // Не скрываем иконку если клик был по ней самой
+          if (!e.relatedTarget || !e.relatedTarget.classList.contains('fix-icon')) {
             setTimeout(() => {
-              const button = document.querySelector(`.fix-button[data-for="${field.id}"]`);
-              if (button) {
-                button.style.display = 'none';
+              if (activeField === field) {
+                activeField = null;
+                hideAllIcons();
               }
             }, 200);
           }
         });
       });
       
-      // Обработка нажатия на Fix with AI
-      fixButtons.forEach(button => {
-        button.addEventListener('click', async () => {
-          const fieldId = button.getAttribute('data-for');
+      // Обработка нажатия на иконку Fix
+      fixIcons.forEach(icon => {
+        icon.addEventListener('click', async () => {
+          const fieldId = icon.getAttribute('data-for');
           const field = document.getElementById(fieldId);
           
           // Получаем текст из поля
@@ -334,7 +352,7 @@
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify({ text, style: 'general' })
+              body: JSON.stringify({ text })
             });
             
             const data = await response.json();
@@ -366,12 +384,12 @@
         });
       });
       
-      // Переключатель для кнопок
+      // Переключатель для иконок
       document.getElementById('auto-detect').addEventListener('change', (e) => {
         if (!e.target.checked) {
-          fixButtons.forEach(button => {
-            button.style.display = 'none';
-          });
+          hideAllIcons();
+        } else if (activeField) {
+          showIconForActiveField();
         }
       });
     });
