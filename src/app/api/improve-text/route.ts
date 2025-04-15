@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     // Возвращаем улучшенный текст
     return NextResponse.json({ improvedText });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API error:', error);
     return NextResponse.json(
       { error: 'Failed to improve text' },
