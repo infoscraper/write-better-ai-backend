@@ -19,8 +19,21 @@ const anthropic = new Anthropic({
 
 // Стилевые промпты для разных типов улучшения текста
 const stylePrompts: Record<string, string> = {
-  general: "Determine the language and style of the text. Then find errors (grammar, punctuation, etc). Don't change the entire text, just fix the errors and typos. The result should be the corrected text, don't add anything extra."
+  general: "Your task is to correct grammatical errors, typos, and punctuation in the text provided. DO NOT change the style, tone, or content of the text. DO NOT add any commentary about the language or style. Just return the corrected text and nothing more."
 };
+
+// Функция для удаления комментариев о языке и стиле из ответа модели
+function cleanAIResponse(response: string): string {
+  // Удаляем строки с описанием языка или стиля
+  response = response.replace(/The language (is|of the text is) [^.]+\.\s*/gi, '');
+  response = response.replace(/The style is [^.]+\.\s*/gi, '');
+  response = response.replace(/(Corrected text|The corrected text is):\s*/gi, '');
+  
+  // Удаляем лишние переносы строк в начале и конце
+  response = response.trim();
+  
+  return response;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -77,7 +90,7 @@ async function improveWithClaude(text: string, prompt: string): Promise<string> 
     });
 
     if (response.content[0].type === 'text') {
-      return response.content[0].text;
+      return cleanAIResponse(response.content[0].text);
     }
     return 'Content could not be processed';
   } catch (error) {
@@ -99,7 +112,7 @@ async function improveWithOpenAI(text: string, prompt: string): Promise<string> 
       ]
     });
 
-    return response.choices[0].message.content || '';
+    return cleanAIResponse(response.choices[0].message.content || '');
   } catch (error) {
     console.error('OpenAI API error:', error);
     throw new Error('Failed to process with OpenAI');
