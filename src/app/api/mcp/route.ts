@@ -32,6 +32,7 @@ const tools = [
 ];
 
 // Обработчик SSE запросов
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(_request: NextRequest) {
   const encoder = new TextEncoder();
   const customUUID = Math.random().toString(36).substring(2, 15);
