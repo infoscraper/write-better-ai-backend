@@ -19,9 +19,7 @@ const anthropic = new Anthropic({
 
 // Стилевые промпты для разных типов улучшения текста
 const stylePrompts: Record<string, string> = {
-  general: "Improve this text while maintaining its original meaning:",
-  business: "Make this text more professional and business-appropriate:",
-  casual: "Make this text more conversational and friendly:"
+  general: "Determine the language and style of the text. Then find errors (grammar, punctuation, etc). Don't change the entire text, just fix the errors and typos. The result should be the corrected text, don't add anything extra."
 };
 
 export async function POST(req: NextRequest) {
@@ -37,9 +35,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Определение стиля по умолчанию
-    const effectiveStyle = style || 'general';
-    const prompt = stylePrompts[effectiveStyle] || stylePrompts.general;
+    // Всегда используем стиль general
+    const prompt = stylePrompts.general;
     
     // Выбираем модель в зависимости от доступных API ключей
     let improvedText = '';
