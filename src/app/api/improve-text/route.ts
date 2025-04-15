@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   try {
     // Получение текста из запроса
     const body = await req.json() as ImproveTextRequest;
-    const { text, style } = body;
+    const { text } = body;
 
     if (!text) {
       return NextResponse.json(
