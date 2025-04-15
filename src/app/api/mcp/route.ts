@@ -18,25 +18,15 @@ const tools = [
   }
 ];
 
-// SSE обработчик
+// GET обработчик - заменяем SSE на обычный HTTP ответ
 export async function GET() {
-  const encoder = new TextEncoder();
   const customUUID = Math.random().toString(36).substring(2, 15);
   
-  const stream = new TransformStream();
-  const writer = stream.writable.getWriter();
-  
-  // Функция для отправки SSE сообщений
-  const writeToStream = async (data: unknown) => {
-    await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-  };
-  
-  // Отправляем начальное сообщение
-  const initialMessage = {
+  // Возвращаем всю информацию в одном HTTP ответе
+  return NextResponse.json({
     jsonrpc: "2.0",
     id: customUUID,
-    method: "init",
-    params: {
+    result: {
       capabilities: {
         tools: {}
       },
@@ -44,29 +34,12 @@ export async function GET() {
         name: "Vercel Integration",
         version: "1.0.0",
         description: "MCP сервер для интеграции с Vercel API"
-      }
+      },
+      tools: tools
     }
-  };
-  
-  // Отправляем init сообщение
-  await writeToStream(initialMessage);
-  
-  // Отправляем список инструментов
-  setTimeout(async () => {
-    await writeToStream({
-      jsonrpc: "2.0",
-      id: Math.random().toString(36).substring(2, 15),
-      result: {
-        tools: tools
-      }
-    });
-  }, 100);
-  
-  return new NextResponse(stream.readable, {
+  }, {
     headers: {
-      'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
       'Access-Control-Allow-Origin': '*'
     }
   });
