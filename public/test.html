@@ -16,6 +16,7 @@
     }
     .form-group {
       margin-bottom: 20px;
+      position: relative;
     }
     label {
       display: block;
@@ -63,28 +64,155 @@
       border: 1px solid #eee;
       background-color: #f9f9f9;
     }
+    /* Новые стили для симуляции расширения */
+    .fix-button {
+      position: absolute;
+      right: 10px;
+      top: 30px;
+      background-color: #4a85f6;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      z-index: 1000;
+      display: none;
+    }
+    .loader-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      display: none;
+    }
+    .loader {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #4a85f6;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .highlight {
+      background-color: #e6f7ff;
+      transition: background-color 1s;
+    }
+    .extension-settings {
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    input:checked + .slider {
+      background-color: #4a85f6;
+    }
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
   <h1>Write Better AI - Test Page</h1>
   
+  <div class="extension-settings">
+    <h2>Extension Settings (Simulation)</h2>
+    <div class="setting-row">
+      <span>Auto-detect text fields</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="auto-detect" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <span>Show button on focus</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="show-on-focus" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-row">
+      <span>Highlight changes</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="highlight-changes" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+  
   <div class="test-section">
     <h2>Extension Test</h2>
-    <p>Install the extension and test it on these input fields:</p>
+    <p>Simulated extension functionality on these input fields:</p>
     
     <div class="form-group">
       <label for="input-text">Input Field (text):</label>
       <input type="text" id="input-text" placeholder="Type some text with errors..." value="This sentense has spelling mistakes and punctuation errors , dont you agree">
+      <button class="fix-button" data-for="input-text">Fix with AI</button>
+      <div class="loader-overlay" id="loader-input-text"><div class="loader"></div></div>
     </div>
     
     <div class="form-group">
       <label for="textarea">Textarea:</label>
       <textarea id="textarea" placeholder="Type longer text with errors...">I recieved your email yestarday but didnt have time to respnd. We can meet tomorow if thats ok with you.</textarea>
+      <button class="fix-button" data-for="textarea">Fix with AI</button>
+      <div class="loader-overlay" id="loader-textarea"><div class="loader"></div></div>
     </div>
     
     <div class="form-group">
       <label for="contenteditable">Contenteditable Div:</label>
       <div id="contenteditable" class="editable" contenteditable="true">Teh quick brown fox jumps over teh lazy dog. its a beautifull day outside. wiht great weather</div>
+      <button class="fix-button" data-for="contenteditable">Fix with AI</button>
+      <div class="loader-overlay" id="loader-contenteditable"><div class="loader"></div></div>
     </div>
   </div>
   
@@ -149,6 +277,103 @@
       } catch (error) {
         resultElement.textContent = `Error: ${error.message}`;
       }
+    });
+
+    // Симуляция функциональности расширения
+    document.addEventListener('DOMContentLoaded', () => {
+      const textFields = document.querySelectorAll('input[type="text"], textarea, [contenteditable="true"]');
+      const fixButtons = document.querySelectorAll('.fix-button');
+      
+      // Обработка фокуса на текстовых полях
+      textFields.forEach(field => {
+        field.addEventListener('focus', () => {
+          if (document.getElementById('show-on-focus').checked && document.getElementById('auto-detect').checked) {
+            // Находим соответствующую кнопку
+            const button = document.querySelector(`.fix-button[data-for="${field.id}"]`);
+            if (button) {
+              button.style.display = 'block';
+            }
+          }
+        });
+        
+        field.addEventListener('blur', (e) => {
+          // Не скрываем кнопку если клик был по ней самой
+          if (!e.relatedTarget || !e.relatedTarget.classList.contains('fix-button')) {
+            setTimeout(() => {
+              const button = document.querySelector(`.fix-button[data-for="${field.id}"]`);
+              if (button) {
+                button.style.display = 'none';
+              }
+            }, 200);
+          }
+        });
+      });
+      
+      // Обработка нажатия на Fix with AI
+      fixButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+          const fieldId = button.getAttribute('data-for');
+          const field = document.getElementById(fieldId);
+          
+          // Получаем текст из поля
+          let text;
+          if (field.getAttribute('contenteditable') === 'true') {
+            text = field.innerText;
+          } else {
+            text = field.value;
+          }
+          
+          // Показываем оверлей загрузки
+          const loader = document.getElementById(`loader-${fieldId}`);
+          loader.style.display = 'flex';
+          
+          try {
+            // Отправляем запрос в API
+            const response = await fetch('/api/improve-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ text, style: 'general' })
+            });
+            
+            const data = await response.json();
+            
+            if (data.error) {
+              alert(`Error: ${data.error}`);
+            } else {
+              // Устанавливаем улучшенный текст
+              if (field.getAttribute('contenteditable') === 'true') {
+                field.innerText = data.improvedText;
+              } else {
+                field.value = data.improvedText;
+              }
+              
+              // Подсвечиваем изменения, если включена опция
+              if (document.getElementById('highlight-changes').checked) {
+                field.classList.add('highlight');
+                setTimeout(() => {
+                  field.classList.remove('highlight');
+                }, 2000);
+              }
+            }
+          } catch (error) {
+            alert(`Error: ${error.message}`);
+          } finally {
+            // Скрываем оверлей загрузки
+            loader.style.display = 'none';
+          }
+        });
+      });
+      
+      // Переключатель для кнопок
+      document.getElementById('auto-detect').addEventListener('change', (e) => {
+        if (!e.target.checked) {
+          fixButtons.forEach(button => {
+            button.style.display = 'none';
+          });
+        }
+      });
     });
   </script>
 </body>
