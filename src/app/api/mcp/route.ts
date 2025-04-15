@@ -163,5 +163,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Удаляем Edge Runtime
-// export const runtime = 'edge'; 
+// Явно указываем, что используем Node.js среду вместо Edge Runtime
+export const config = {
+  runtime: 'nodejs'
+}; 
